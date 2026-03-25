@@ -22,42 +22,37 @@ This repository documents the complete setup of MCPs (Model Context Protocols) a
 
 ### Quick Setup
 
-1. **Install chrome-devtools-mcp globally:**
-   ```powershell
-   npm install -g chrome-devtools-mcp
-   ```
-
-2. **Install Python requests (for DeepWiki bridge):**
+1. **Install Python requests (for DeepWiki bridge):**
    ```powershell
    pip install requests
    ```
 
-3. **Create config directory:**
+2. **Create config directory:**
    ```powershell
    New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.config\opencode"
    ```
 
-4. **Copy the configuration file:**
+3. **Copy the configuration file:**
    ```powershell
    Copy-Item opencode.jsonc "$env:USERPROFILE\.config\opencode\opencode.jsonc" -Force
    ```
 
-5. **Copy skills:**
+4. **Copy skills:**
    ```powershell
    Copy-Item -Recurse skills "$env:USERPROFILE\.config\opencode\" -Force
    ```
 
-6. **Copy DeepWiki bridge:**
+5. **Copy DeepWiki bridge:**
    ```powershell
    Copy-Item -Recurse deepwiki-bridge "$env:USERPROFILE\.config\opencode\" -Force
    ```
 
-7. **Create Chrome CDP profile directory:**
+6. **Create Chrome CDP profile directory:**
    ```powershell
    New-Item -ItemType Directory -Force -Path "$env:LOCALAPPDATA\ChromeCDPProfile"
    ```
 
-8. **Restart OpenCode Desktop** to load the new configuration
+7. **Restart OpenCode Desktop** to load the new configuration
 
 ## Configuration
 
@@ -114,6 +109,8 @@ This repository documents the complete setup of MCPs (Model Context Protocols) a
 
 **Uses a dedicated Chrome profile** at `C:\Users\%USERNAME%\AppData\Local\ChromeCDPProfile` - separate from your main Chrome.
 
+**Installation:** Uses `npx chrome-devtools-mcp@latest` - no global installation required. Downloaded automatically on first use.
+
 **Setup:**
 1. Launch Chrome with remote debugging:
    ```powershell
@@ -128,6 +125,8 @@ This repository documents the complete setup of MCPs (Model Context Protocols) a
    ```
 
 **Timeout:** 300000ms (5 minutes)
+
+**Note:** The MCP will fail with error -32000 if Chrome is not running with CDP enabled. Always start Chrome first before using the MCP.
 
 ### context7
 

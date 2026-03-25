@@ -21,8 +21,9 @@
   "mcp": {
     "chrome-devtools": {
       "command": [
-        "node",
-        "C:\\Users\\steph\\AppData\\Roaming\\npm\\node_modules\\chrome-devtools-mcp\\build\\src\\index.js",
+        "npx",
+        "-y",
+        "chrome-devtools-mcp@latest",
         "--browserUrl",
         "http://127.0.0.1:9333",
         "--viewport=1280x720"
