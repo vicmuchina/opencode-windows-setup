@@ -9,6 +9,8 @@ description: Chrome DevTools Protocol integration for Windows - launch Chrome wi
 
 This skill provides the complete workflow to launch Google Chrome on Windows with remote debugging enabled, allowing the chrome-devtools MCP to control the browser for automation tasks.
 
+**Uses a dedicated CDP profile** at `C:\Users\steph\AppData\Local\ChromeCDPProfile` - separate from your main Chrome, keeping them independent.
+
 ## When to Use
 
 Use this skill when:
@@ -24,67 +26,84 @@ Use this skill when:
 Run this PowerShell command to launch Chrome with CDP enabled on port 9333:
 
 ```powershell
-& "C:\Program Files\Google\Chrome\Application\chrome.exe" `
-  --remote-debugging-port=9333 `
-  --remote-debugging-address=127.0.0.1 `
-  --user-data-dir="C:\Users\steph\AppData\Local\Google\Chrome\User Data" `
-  --profile-directory=Default `
-  --no-first-run `
-  --no-default-browser-check
+Start-Process "C:\Program Files\Google\Chrome\Application\chrome.exe" -ArgumentList "--remote-debugging-port=9333","--remote-debugging-address=127.0.0.1","--user-data-dir=C:\Users\steph\AppData\Local\ChromeCDPProfile","--no-first-run","--no-default-browser-check","about:blank"
 ```
 
-**One-liner version:**
-```powershell
-& "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9333 --remote-debugging-address=127.0.0.1 --user-data-dir="C:\Users\steph\AppData\Local\Google\Chrome\User Data" --profile-directory=Default --no-first-run --no-default-browser-check
-```
+### Step 2: Sign In (First Time Only)
 
-### Step 2: Verify Chrome is Listening
+**If this is the first time launching the CDP profile:**
+1. Chrome will open with a fresh profile
+2. Sign in with your Google account
+3. Your logins will persist for future sessions
+
+**Subsequent launches:** Your session will be preserved - no need to sign in again.
+
+### Step 3: Verify Chrome is Listening
 
 After Chrome launches, verify the CDP endpoint is accessible:
 
 ```powershell
-curl http://127.0.0.1:9333/json/version
+Invoke-WebRequest -Uri "http://127.0.0.1:9333/json/version" -UseBasicParsing | Select-Object -ExpandProperty Content
 ```
 
 **Expected output:**
 ```json
 {
-  "Browser": "Chrome/146.0.7680.164",
-  "Protocol-Version": "1.3",
-  "User-Agent": "...",
-  "V8-Version": "...",
-  "WebKit-Version": "..."
+   "Browser": "Chrome/146.0.7680.165",
+   "Protocol-Version": "1.3",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:9333/devtools/browser/..."
 }
 ```
 
 If you see JSON output, Chrome is ready for the MCP to connect.
 
-### Step 3: Check MCP Status
+### Step 4: Check MCP Status
 
 In OpenCode Desktop, check the MCPs panel. The chrome-devtools MCP should now show "connected" instead of "failed".
 
 ## Chrome Profile
 
-**Profile Location:** `C:\Users\steph\AppData\Local\Google\Chrome\User Data\Default`
+**CDP Profile Location:** `C:\Users\steph\AppData\Local\ChromeCDPProfile`
 
-This uses your existing Chrome profile, so:
-- ✅ Bookmarks are preserved
-- ✅ Extensions are available
-- ✅ Login sessions persist
-- ✅ History is maintained
+This is a **dedicated profile for OpenCode**, separate from your main Chrome:
+- ✅ Independent from your regular Chrome
+- ✅ Sessions persist across launches
+- ✅ Sign in once, stays logged in
+- ✅ No interference with normal browsing
+
+## Automation Workflow
+
+For AI agents automating browser tasks:
+
+### 1. Check if Chrome CDP is already running
+```powershell
+try {
+    $response = Invoke-WebRequest -Uri "http://127.0.0.1:9333/json/version" -UseBasicParsing -TimeoutSec 3
+    Write-Host "CDP already running"
+} catch {
+    Write-Host "CDP not running, need to launch Chrome"
+}
+```
+
+### 2. If not running, launch Chrome with CDP
+```powershell
+# Kill any existing Chrome using the CDP profile
+Get-Process chrome -ErrorAction SilentlyContinue | Stop-Process -Force
+Start-Sleep -Seconds 2
+
+# Launch Chrome with CDP
+Start-Process "C:\Program Files\Google\Chrome\Application\chrome.exe" -ArgumentList "--remote-debugging-port=9333","--remote-debugging-address=127.0.0.1","--user-data-dir=C:\Users\steph\AppData\Local\ChromeCDPProfile","--no-first-run","--no-default-browser-check","about:blank"
+```
+
+### 3. Wait and verify
+```powershell
+Start-Sleep -Seconds 3
+Invoke-WebRequest -Uri "http://127.0.0.1:9333/json/version" -UseBasicParsing
+```
+
+### 4. Proceed with browser automation via chrome-devtools MCP
 
 ## Troubleshooting
-
-### Chrome Already Running Without CDP
-
-If Chrome is already running without remote debugging:
-
-1. **Close all Chrome windows completely**
-2. **Check for background processes:**
-   ```powershell
-   taskkill /F /IM chrome.exe
-   ```
-3. **Relaunch with CDP flags** (use the command above)
 
 ### Port 9333 Already in Use
 
@@ -92,44 +111,51 @@ If port 9333 is occupied:
 
 1. **Find what's using the port:**
    ```powershell
-   netstat -ano | findstr :9333
+   netstat -ano | Select-String ":9333"
    ```
 
-2. **Kill the process or use a different port** (e.g., 9334):
+2. **Kill Chrome and relaunch:**
    ```powershell
-   & "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9334 --remote-debugging-address=127.0.0.1 --user-data-dir="C:\Users\steph\AppData\Local\Google\Chrome\User Data" --profile-directory=Default
+   Get-Process chrome -ErrorAction SilentlyContinue | Stop-Process -Force
+   Start-Sleep -Seconds 2
+   # Then relaunch with the command above
    ```
-
-3. **Update the MCP config** if using a different port
 
 ### Connection Refused
 
-If `curl http://127.0.0.1:9333/json/version` returns "connection refused":
+If the CDP endpoint returns "connection refused":
 
 1. **Verify Chrome is running:**
    ```powershell
    Get-Process chrome
    ```
 
-2. **Check Chrome was launched with correct flags:**
-   - Look for `--remote-debugging-port=9333` in the command line
+2. **Check Chrome was launched with correct flags** - the CDP Chrome uses a separate profile
 
-3. **Try localhost instead:**
+3. **Try localhost instead of 127.0.0.1:**
    ```powershell
-   curl http://localhost:9333/json/version
+   Invoke-WebRequest -Uri "http://localhost:9333/json/version" -UseBasicParsing
    ```
 
-### MCP Still Shows "Failed"
+### MCP Still Shows "Failed" or Error 32000
 
-If the MCP still fails after Chrome is running with CDP:
+Error 32000 = Chrome is not running with CDP enabled.
 
-1. **Restart the MCP** in OpenCode Desktop (toggle off/on)
-2. **Restart OpenCode Desktop** completely
-3. **Check timeout settings** in config (should be 45000ms)
-4. **Verify node can reach the endpoint:**
-   ```powershell
-   node -e "fetch('http://127.0.0.1:9333/json/version').then(r => r.json()).then(console.log)"
-   ```
+1. **Ensure Chrome is launched with CDP flags** (use the command above)
+2. **Verify CDP is listening** with the curl/Invoke-WebRequest command
+3. **Restart the MCP** in OpenCode Desktop (toggle off/on)
+4. **Restart OpenCode Desktop** completely
+
+### Chrome Opens but No CDP
+
+If Chrome opens but CDP doesn't work:
+- Another Chrome instance might be interfering
+- Kill ALL Chrome processes first:
+  ```powershell
+  Get-Process chrome -ErrorAction SilentlyContinue | Stop-Process -Force
+  ```
+- Wait 2-3 seconds
+- Launch Chrome with CDP flags again
 
 ## Chrome Location
 
@@ -142,38 +168,16 @@ C:\Program Files\Google\Chrome\Application\chrome.exe
 - 32-bit: `C:\Program Files (x86)\Google\Chrome\Application\chrome.exe`
 - User install: `C:\Users\<username>\AppData\Local\Google\Chrome\Application\chrome.exe`
 
-**Find Chrome path:**
-```powershell
-(Get-Command chrome).Source
-```
-
 ## Command Line Flags Explained
 
 | Flag | Purpose |
 |------|---------|
 | `--remote-debugging-port=9333` | Enable CDP on port 9333 |
 | `--remote-debugging-address=127.0.0.1` | Bind to localhost only |
-| `--user-data-dir=...` | Use specific profile directory |
-| `--profile-directory=Default` | Use the Default profile |
+| `--user-data-dir=...` | Use dedicated CDP profile directory |
 | `--no-first-run` | Skip first-run experience |
 | `--no-default-browser-check` | Skip default browser check |
-
-## Automation Workflow
-
-For AI agents automating browser tasks:
-
-1. **Check if Chrome is already running with CDP:**
-   ```powershell
-   curl -s http://127.0.0.1:9333/json/version
-   ```
-
-2. **If fails, launch Chrome with CDP** (use the command above)
-
-3. **Wait 2-3 seconds** for Chrome to fully initialize
-
-4. **Verify connection** with curl command
-
-5. **Proceed with browser automation** via chrome-devtools MCP
+| `about:blank` | Start with blank page |
 
 ## Related MCPs
 
