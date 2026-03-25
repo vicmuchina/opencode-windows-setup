@@ -28,7 +28,7 @@
         "--viewport=1280x720"
       ],
       "enabled": true,
-      "timeout": 45000,
+      "timeout": 300000,
       "type": "local"
     },
     "context7": {
@@ -41,7 +41,7 @@
       "environment": {
         "CONTEXT7_API_KEY": "ctx7sk-cdba4742-32b9-4585-90fb-8783979b008a"
       },
-      "timeout": 45000,
+      "timeout": 150000,
       "type": "local"
     },
     "deepwiki": {
@@ -51,7 +51,7 @@
       ],
       "enabled": true,
       "environment": {},
-      "timeout": 45000,
+      "timeout": 150000,
       "type": "local"
     },
     "tavily": {
@@ -64,7 +64,7 @@
       "environment": {
         "TAVILY_API_KEY": "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"
       },
-      "timeout": 45000,
+      "timeout": 150000,
       "type": "local"
     }
   },
