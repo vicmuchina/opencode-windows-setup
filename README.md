@@ -7,8 +7,8 @@ Complete MCP and Skills configuration for OpenCode Desktop on Windows, migrated 
 This repository documents the complete setup of MCPs (Model Context Protocols) and Skills for OpenCode Desktop on Windows, including:
 
 - 4 MCP servers (chrome-devtools, context7, deepwiki, tavily)
-- 31 Skills for various development workflows
-- Chrome DevTools integration with Windows Chrome profile
+- 32 Skills for various development workflows
+- Chrome DevTools integration with dedicated CDP profile
 - DeepWiki bridge for documentation access
 
 ## Installation
@@ -34,23 +34,30 @@ This repository documents the complete setup of MCPs (Model Context Protocols) a
 
 3. **Create config directory:**
    ```powershell
-   mkdir -p "$env:USERPROFILE\.config\opencode"
+   New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.config\opencode"
    ```
 
 4. **Copy the configuration file:**
    ```powershell
-   Copy-Item opencode.jsonc "$env:USERPROFILE\.config\opencode\opencode.jsonc"
+   Copy-Item opencode.jsonc "$env:USERPROFILE\.config\opencode\opencode.jsonc" -Force
    ```
 
 5. **Copy skills:**
    ```powershell
-   Copy-Item -Recurse skills "$env:USERPROFILE\.config\opencode\"
+   Copy-Item -Recurse skills "$env:USERPROFILE\.config\opencode\" -Force
    ```
 
 6. **Copy DeepWiki bridge:**
    ```powershell
-   Copy-Item -Recurse deepwiki-bridge "$env:USERPROFILE\.config\opencode\"
+   Copy-Item -Recurse deepwiki-bridge "$env:USERPROFILE\.config\opencode\" -Force
    ```
+
+7. **Create Chrome CDP profile directory:**
+   ```powershell
+   New-Item -ItemType Directory -Force -Path "$env:LOCALAPPDATA\ChromeCDPProfile"
+   ```
+
+8. **Restart OpenCode Desktop** to load the new configuration
 
 ## Configuration
 
@@ -59,8 +66,9 @@ This repository documents the complete setup of MCPs (Model Context Protocols) a
 ```
 %USERPROFILE%\.config\opencode/
 ├── opencode.jsonc          # Main configuration
-├── skills/                 # 31 skill directories
+├── skills/                 # 32 skill directories
 │   ├── agent-browser/
+│   ├── chrome-devtools-windows/   # Chrome CDP setup skill
 │   ├── context7/
 │   ├── crawl/
 │   ├── database-migration/
@@ -94,6 +102,8 @@ This repository documents the complete setup of MCPs (Model Context Protocols) a
 │   └── web-design-guidelines/
 └── deepwiki-bridge/
     └── bridge.py           # DeepWiki MCP bridge
+
+%LOCALAPPDATA%\ChromeCDPProfile/   # Dedicated Chrome CDP profile
 ```
 
 ## MCPs
@@ -102,25 +112,22 @@ This repository documents the complete setup of MCPs (Model Context Protocols) a
 
 **Purpose:** Browser automation via Chrome DevTools Protocol
 
+**Uses a dedicated Chrome profile** at `C:\Users\%USERNAME%\AppData\Local\ChromeCDPProfile` - separate from your main Chrome.
+
 **Setup:**
 1. Launch Chrome with remote debugging:
    ```powershell
-   & "C:\Program Files\Google\Chrome\Application\chrome.exe" `
-     --remote-debugging-port=9333 `
-     --remote-debugging-address=127.0.0.1 `
-     --user-data-dir="$env:LOCALAPPDATA\Google\Chrome\User Data" `
-     --profile-directory=Default `
-     --no-first-run `
-     --no-default-browser-check
+   Start-Process "C:\Program Files\Google\Chrome\Application\chrome.exe" -ArgumentList "--remote-debugging-port=9333","--remote-debugging-address=127.0.0.1","--user-data-dir=$env:LOCALAPPDATA\ChromeCDPProfile","--no-first-run","--no-default-browser-check","about:blank"
    ```
 
-2. Verify Chrome is listening:
+2. **First time only:** Sign in with your Google account. Sessions persist for future launches.
+
+3. Verify Chrome is listening:
    ```powershell
-   curl http://127.0.0.1:9333/json/version
+   Invoke-WebRequest -Uri "http://127.0.0.1:9333/json/version" -UseBasicParsing
    ```
 
-**Profile:** Uses your existing Chrome profile at `C:\Users\%USERNAME%\AppData\Local\Google\Chrome\User Data\Default`
-
+**Timeout:** 300000ms (5 minutes)
 
 ### context7
 
@@ -128,6 +135,8 @@ This repository documents the complete setup of MCPs (Model Context Protocols) a
 
 **Environment:**
 - `CONTEXT7_API_KEY`: Your Context7 API key
+
+**Timeout:** 150000ms (2.5 minutes)
 
 **Note:** Installed via npx, no additional setup required
 
@@ -141,6 +150,8 @@ This repository documents the complete setup of MCPs (Model Context Protocols) a
 - Python 3
 - requests library (`pip install requests`)
 
+**Timeout:** 150000ms (2.5 minutes)
+
 ### tavily
 
 **Purpose:** Web search via Tavily API
@@ -148,7 +159,20 @@ This repository documents the complete setup of MCPs (Model Context Protocols) a
 **Environment:**
 - `TAVILY_API_KEY`: Your Tavily API key
 
+**Timeout:** 150000ms (2.5 minutes)
+
 **Note:** Installed via npx, no additional setup required
+
+## MCP Timeout Reference
+
+| MCP | Timeout | Reason |
+|-----|---------|--------|
+| chrome-devtools | 300000ms (5 min) | Browser operations can be slow |
+| context7 | 150000ms (2.5 min) | API + npx download time |
+| deepwiki | 150000ms (2.5 min) | Network requests |
+| tavily | 150000ms (2.5 min) | API + npx download time |
+
+**Default timeout is 5000ms** if not specified - too short for npx downloads!
 
 ## Skills Reference
 
@@ -187,6 +211,7 @@ This repository documents the complete setup of MCPs (Model Context Protocols) a
 
 | Skill | Description |
 |-------|-------------|
+| `chrome-devtools-windows` | Chrome CDP setup for Windows |
 | `opencode-pty` | PTY management for long-running processes |
 | `opencontext` | Git-style context management for AI sessions |
 | `pdf` | PDF manipulation |
@@ -223,25 +248,39 @@ The configuration includes 4 AI providers:
 
 If MCPs show "Request timed out" errors:
 
-1. **Increase timeout values** in `opencode.jsonc`:
-   ```json
-   "timeout": 45000
+1. **Check timeout values** in `opencode.jsonc` - should be 150000+ for npx-based MCPs
+2. **Check network connectivity** for API-based MCPs (context7, tavily)
+3. **First run takes longer** - npx needs to download packages
+
+### Chrome DevTools Error 32000
+
+Error 32000 = Chrome is not running with CDP enabled.
+
+1. **Kill all Chrome processes:**
+   ```powershell
+   Get-Process chrome -ErrorAction SilentlyContinue | Stop-Process -Force
    ```
 
-2. **Check network connectivity** for API-based MCPs (context7, tavily)
+2. **Launch Chrome with CDP flags:**
+   ```powershell
+   Start-Process "C:\Program Files\Google\Chrome\Application\chrome.exe" -ArgumentList "--remote-debugging-port=9333","--remote-debugging-address=127.0.0.1","--user-data-dir=$env:LOCALAPPDATA\ChromeCDPProfile","--no-first-run","--no-default-browser-check","about:blank"
+   ```
 
-3. **Verify Chrome is running** for chrome-devtools MCP
+3. **Wait 3-4 seconds**, then verify:
+   ```powershell
+   Invoke-WebRequest -Uri "http://127.0.0.1:9333/json/version" -UseBasicParsing
+   ```
+
+4. **Restart the MCP** in OpenCode Desktop (toggle off/on)
 
 ### Chrome DevTools Connection Failed
 
-1. Ensure Chrome is launched with remote debugging:
+1. Ensure Chrome is launched with remote debugging
+2. Check that the CDP profile directory exists
+3. Verify port 9333 is not in use by another process:
    ```powershell
-   curl http://127.0.0.1:9333/json/version
+   netstat -ano | Select-String ":9333"
    ```
-
-2. Check that the profile path is correct in the config
-
-3. Try a different port if 9333 is in use
 
 ### Skills Not Loading
 
@@ -254,14 +293,21 @@ If MCPs show "Request timed out" errors:
 
 3. Restart OpenCode Desktop
 
+### npx Package Download Slow
+
+First run of `npx -y @upstash/context7-mcp` or `npx -y tavily-mcp@latest` downloads the package. This can take 30-60 seconds on slow connections.
+
+**Solution:** Increase timeout to 150000ms (already done in config)
+
 ## Migration from WSL
 
 This setup was migrated from WSL Ubuntu to Windows. Key changes:
 
 - **Paths**: WSL paths (`/home/vic/...`) → Windows paths (`C:\Users\...`)
-- **Chrome Profile**: WSL Chrome → Windows Chrome
+- **Chrome Profile**: Dedicated CDP profile instead of WSL Chrome
 - **Node**: WSL node → Windows node
 - **Python**: WSL python3 → Windows python
+- **Timeouts**: Increased from default 5000ms to 150000ms+
 
 ## Contributing
 
