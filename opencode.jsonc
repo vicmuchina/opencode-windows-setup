@@ -1,0 +1,486 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "build": {
+      "skills": [
+        "*"
+      ]
+    },
+    "plan": {
+      "skills": [
+        "*"
+      ]
+    }
+  },
+  "compaction": {
+    "auto": true,
+    "prune": true,
+    "reserveTokens": 16000
+  },
+  "default_agent": "build",
+  "mcp": {
+    "chrome-devtools": {
+      "command": [
+        "node",
+        "C:\\Users\\steph\\AppData\\Roaming\\npm\\node_modules\\chrome-devtools-mcp\\build\\src\\index.js",
+        "--browserUrl",
+        "http://127.0.0.1:9333",
+        "--viewport=1280x720"
+      ],
+      "enabled": true,
+      "timeout": 45000,
+      "type": "local"
+    },
+    "context7": {
+      "command": [
+        "npx",
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "enabled": true,
+      "environment": {
+        "CONTEXT7_API_KEY": "ctx7sk-cdba4742-32b9-4585-90fb-8783979b008a"
+      },
+      "timeout": 45000,
+      "type": "local"
+    },
+    "deepwiki": {
+      "command": [
+        "python",
+        "C:\\Users\\steph\\.config\\opencode\\deepwiki-bridge\\bridge.py"
+      ],
+      "enabled": true,
+      "environment": {},
+      "timeout": 45000,
+      "type": "local"
+    },
+    "tavily": {
+      "command": [
+        "npx",
+        "-y",
+        "tavily-mcp@latest"
+      ],
+      "enabled": true,
+      "environment": {
+        "TAVILY_API_KEY": "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"
+      },
+      "timeout": 45000,
+      "type": "local"
+    }
+  },
+  "permission": {
+    "bash": "allow",
+    "doom_loop": "allow",
+    "edit": "allow",
+    "external_directory": "allow",
+    "skill": "allow",
+    "webfetch": "allow"
+  },
+  "plugin": [
+    "opencode-antigravity-auth@latest",
+    "opencode-skills",
+    "opencode-pty"
+  ],
+  "provider": {
+    "chutes": {
+      "models": {
+        "moonshotai/Kimi-K2-Thinking": {
+          "limit": {
+            "context": 200000,
+            "output": 16384
+          },
+          "name": "Kimi K2 Thinking"
+        },
+        "moonshotai/Kimi-K2.5-TEE": {
+          "limit": {
+            "context": 200000,
+            "output": 16384
+          },
+          "name": "Kimi K2.5 TEE"
+        },
+        "xiaomimimo/mimo-v2-flash": {
+          "limit": {
+            "context": 256000,
+            "output": 32000
+          },
+          "name": "MiMo V2 Flash",
+          "options": {
+            "reasoning_effort": "max",
+            "thinking": "preserved"
+          }
+        },
+        "zai-org/GLM-4.7-TEE": {
+          "limit": {
+            "context": 190000,
+            "output": 131072
+          },
+          "name": "GLM 4.7",
+          "options": {
+            "reasoning_effort": "max",
+            "thinking": "preserved"
+          }
+        },
+        "zai-org/GLM-5-FP8": {
+          "limit": {
+            "context": 200000,
+            "output": 131072
+          },
+          "name": "GLM 5 FP8"
+        }
+      },
+      "name": "Chutes AI",
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "apiKey": "cpk_749238160b2b4adca1f02a57b97315cd.3470a1f8f3b25e23a7ba64cb79f7b081.TPuqwu1FsD6QmBLtRrICThuBd0HODnVW",
+        "baseURL": "https://llm.chutes.ai/v1"
+      }
+    },
+    "bailian-coding-plan": {
+      "name": "Alibaba DashScope",
+      "npm": "@ai-sdk/anthropic",
+      "options": {
+        "apiKey": "sk-sp-538c754005aa4fc08d2f82331479ac05",
+        "baseURL": "https://coding-intl.dashscope.aliyuncs.com/apps/anthropic/v1"
+      },
+      "models": {
+        "kimi-k2.5": {
+          "name": "Kimi K2.5 (DashScope)",
+          "limit": {
+            "context": 262144,
+            "output": 65536
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "options": {
+            "thinking": {
+              "type": "enabled",
+              "budgetTokens": 1024
+            }
+          }
+        },
+        "qwen3.5-plus": {
+          "name": "Qwen 3.5 Plus (DashScope)",
+          "limit": {
+            "context": 1000000,
+            "output": 65536
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "options": {
+            "thinking": {
+              "type": "enabled",
+              "budgetTokens": 1024
+            }
+          }
+        },
+        "qwen3-max-2026-01-23": {
+          "name": "Qwen 3 Max (DashScope)",
+          "limit": {
+            "context": 262144,
+            "output": 65536
+          }
+        },
+        "qwen3-coder-next": {
+          "name": "Qwen 3 Coder Next (DashScope)",
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
+        "qwen3-coder-plus": {
+          "name": "Qwen 3 Coder Plus (DashScope)",
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
+        "glm-5": {
+          "name": "GLM 5 (DashScope)",
+          "limit": {
+            "context": 204800,
+            "output": 131072
+          },
+          "options": {
+            "thinking": {
+              "type": "enabled",
+              "budgetTokens": 1024
+            }
+          }
+        },
+        "glm-4.7": {
+          "name": "GLM 4.7 (DashScope)",
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          },
+          "options": {
+            "thinking": {
+              "type": "enabled",
+              "budgetTokens": 1024
+            }
+          }
+        },
+        "MiniMax-M2.5": {
+          "name": "MiniMax M2.5 (DashScope)",
+          "limit": {
+            "context": 204800,
+            "output": 128000
+          },
+          "options": {
+            "thinking": {
+              "type": "enabled",
+              "budgetTokens": 1024
+            }
+          }
+        }
+      }
+    },
+    "google": {
+      "models": {
+        "antigravity-claude-opus-4-5-thinking": {
+          "limit": {
+            "context": 200000,
+            "output": 64000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "pdf"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "Claude Opus 4.5 Thinking (Antigravity)",
+          "variants": {
+            "low": {
+              "thinkingConfig": {
+                "thinkingBudget": 8192
+              }
+            },
+            "max": {
+              "thinkingConfig": {
+                "thinkingBudget": 32768
+              }
+            }
+          }
+        },
+        "antigravity-claude-sonnet-4-5": {
+          "limit": {
+            "context": 200000,
+            "output": 64000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "pdf"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "Claude Sonnet 4.5 (Antigravity)"
+        },
+        "antigravity-claude-sonnet-4-5-thinking": {
+          "limit": {
+            "context": 200000,
+            "output": 64000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "pdf"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "Claude Sonnet 4.5 Thinking (Antigravity)",
+          "variants": {
+            "low": {
+              "thinkingConfig": {
+                "thinkingBudget": 8192
+              }
+            },
+            "max": {
+              "thinkingConfig": {
+                "thinkingBudget": 32768
+              }
+            }
+          }
+        },
+        "antigravity-gemini-3-flash": {
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "pdf"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "Gemini 3 Flash (Antigravity)",
+          "variants": {
+            "high": {
+              "thinkingLevel": "high"
+            },
+            "low": {
+              "thinkingLevel": "low"
+            },
+            "medium": {
+              "thinkingLevel": "medium"
+            },
+            "minimal": {
+              "thinkingLevel": "minimal"
+            }
+          }
+        },
+        "antigravity-gemini-3-pro": {
+          "limit": {
+            "context": 1048576,
+            "output": 65535
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "pdf"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "Gemini 3 Pro (Antigravity)",
+          "variants": {
+            "high": {
+              "thinkingLevel": "high"
+            },
+            "low": {
+              "thinkingLevel": "low"
+            }
+          }
+        },
+        "gemini-2.5-flash": {
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "pdf"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "Gemini 2.5 Flash (Gemini CLI)"
+        },
+        "gemini-2.5-pro": {
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "pdf"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "Gemini 2.5 Pro (Gemini CLI)"
+        },
+        "gemini-3-flash-preview": {
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "pdf"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "Gemini 3 Flash Preview (Gemini CLI)"
+        },
+        "gemini-3-pro-preview": {
+          "limit": {
+            "context": 1048576,
+            "output": 65535
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "pdf"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "Gemini 3 Pro Preview (Gemini CLI)"
+        }
+      },
+      "npm": "@ai-sdk/google"
+    },
+    "ollama": {
+      "models": {
+        "glm-5:cloud": {
+          "_launch": true,
+          "name": "glm-5:cloud"
+        },
+        "kimi-k2.5:cloud": {
+          "_launch": true,
+          "limit": {
+            "context": 262144,
+            "output": 262144
+          },
+          "name": "kimi-k2.5:cloud"
+        },
+        "minimax-m2.5:cloud": {
+          "_launch": true,
+          "limit": {
+            "context": 204800,
+            "output": 128000
+          },
+          "name": "minimax-m2.5:cloud"
+        }
+      },
+      "name": "Ollama (local)",
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "http://127.0.0.1:11434/v1"
+      }
+    }
+  }
+}
